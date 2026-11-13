@@ -113,9 +113,24 @@ body.locked .wrap{display:none}
 .newbox{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:12px}
 #toast{display:none;position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1d1b19;color:#fff;padding:10px 16px;border-radius:6px;font-family:var(--mono);font-size:12px;z-index:50;box-shadow:0 4px 14px #0005}
 #toast button{margin-left:10px;background:#f2c744;color:#1d1b19;border-color:#f2c744;padding:3px 10px}
+/* ---- responsive: fill the screen ---- */
+body{font-size:clamp(14px,.35vw + 12px,17px)}
+.wrap{max-width:none;margin:14px;min-height:calc(100vh - 28px);min-height:calc(100dvh - 28px);padding:clamp(14px,2.2vw,32px) clamp(12px,2.4vw,36px) 70px}
+@media(max-width:640px){.wrap{margin:0;min-height:100vh;min-height:100dvh;padding:14px 12px 50px}
+ .bar label{flex:1 1 44%;display:flex;gap:6px;align-items:center}
+ .bar label select,.bar label input:not([type=checkbox]):not([type=range]):not([type=color]){flex:1;min-width:0}
+ button{padding:10px 14px}.tabs button{padding:12px 28px 12px 16px}
+ .gh{font-size:11px}}
+.grid{grid-template-columns:repeat(auto-fill,minmax(clamp(150px,14vw,240px),1fr))}
+@media(min-width:960px){
+ #vCo:not(.hide){display:grid;grid-template-columns:minmax(300px,25vw) minmax(0,1fr);gap:22px;align-items:start}
+ #vCo .ctl{position:sticky;top:12px;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:2px 8px 2px 2px}
+ #vCo .pv canvas.page{max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px)}
+}
 @page{size:A4 landscape;margin:0}
 @media print{
- body{background:#fff!important}.noprint{display:none!important}.wrap{padding:0;max-width:none;margin:0;background:none!important;box-shadow:none!important}
+ body{background:#fff!important}.noprint{display:none!important}.wrap{padding:0;max-width:none;margin:0;min-height:0!important;background:none!important;box-shadow:none!important}
+ #vCo:not(.hide){display:block!important}.pv{display:block!important;width:100%!important}
  canvas.page{width:100%!important;max-width:none!important;max-height:none!important;height:auto!important;margin:0!important;border:none;margin:0;box-shadow:none;break-after:page}
  canvas.page:last-child{break-after:auto}
 }
@@ -163,6 +178,7 @@ body.locked .wrap{display:none}
 </section>
 
 <section id="vCo" class="hide">
+<div class="ctl noprint">
  <div class="bar noprint">
   <label>Title <input id="ttl" size="12"></label>
   <label>Font <select id="fnt"><option>Permanent Marker</option><option>Bangers</option><option>Lilita One</option><option>Rubik Mono One</option><option>Caveat Brush</option></select></label>
@@ -186,7 +202,8 @@ body.locked .wrap{display:none}
  <div id="selbar" class="bar noprint" style="display:none"><span class="hint" style="margin:0">Selected poster</span><button data-sa="front">Bring to front</button><button data-sa="back">Send to back</button><button data-sa="big">Bigger</button><button data-sa="small">Smaller</button><button data-sa="prev">◀ Page</button><button data-sa="next">Page ▶</button></div>
  <div id="fmts" class="noprint"></div>
  <div id="arr" class="noprint"></div>
- <div id="comp"></div>
+ </div>
+ <div class="pv"><div id="comp"></div></div>
 </section>
 </div>
 
