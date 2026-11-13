@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Monthly Work Compiler</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Lilita+One&family=Rubik+Mono+One&family=Caveat+Brush&family=Pixelify+Sans:wght@600&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Lilita+One&family=Rubik+Mono+One&family=Caveat+Brush&family=Pixelify+Sans:wght@600&family=Gaegu:wght@400;700&family=Space+Mono:wght@400;700&family=Inter:wght@400;600;700;800&family=Anton&display=swap">
 <style>
 :root{--bg:#faf8f5;--card:#fff;--ink:#1d1b19;--mut:#6b665f;--line:#e4dfd7;--acc:#c2410c;--accink:#fff;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -132,26 +132,100 @@ body{font-size:clamp(14px,.35vw + 12px,17px)}
  .pv{min-width:0}
  #vCo .pv canvas.page{max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px)}
 }
+/* ---- neo-brutalist theme ---- */
+html:root,html:root[data-theme="light"]{--bg:#fffaff;--card:#fff;--ink:#111;--mut:#555;--line:#d8d3c6;--bd:#111;--sh:#111;--blkbg:#111;--blktx:#fff;--acc:#111;--accink:#fff;--sheet:#fff;--rule:transparent;--pink:#f26ddf;--yel:#f6ff3d;--blu:#1ea4ff;--pix:'Anton',Impact,'Arial Narrow',sans-serif;--hand:Inter,system-ui,sans-serif;--mono:Inter,system-ui,sans-serif;color-scheme:light}
+html:root[data-theme="dark"]{--bg:#141217;--card:#1f1c25;--ink:#f4f0e8;--mut:#a9a4b3;--line:#3b3744;--bd:#f4f0e8;--sh:#000;--blkbg:#f4f0e8;--blktx:#111;--acc:#f4f0e8;--accink:#111;--sheet:#1f1c25;color-scheme:dark}
+body{background:var(--bg);background-image:none;color:var(--ink)}
+.wrap{background:var(--card);background-image:none;border:3px solid var(--bd);border-radius:28px;box-shadow:none}
+@media(max-width:640px){.wrap{margin:6px;border-radius:20px}}
+.hero{padding:0 0 18px}
+.navp{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:3px solid var(--bd);border-radius:16px;padding:8px 10px 8px 16px;background:var(--card);box-shadow:0 4px 0 var(--sh);text-align:left}
+.logo{font-family:var(--pix);font-size:24px;letter-spacing:.02em}
+.navp .hw{font-family:var(--hand);font-size:14px;font-weight:700;color:var(--ink);margin-left:auto}
+.big{font-family:var(--pix);font-weight:400;text-transform:uppercase;font-size:clamp(40px,7.5vw,104px);line-height:1.02;margin:clamp(18px,3vw,40px) 0 12px}
+.blk{display:inline-block;background:var(--blkbg);color:var(--blktx);padding:0 .18em;border-radius:6px;margin-top:.06em}
+.tagline{font-family:var(--hand);font-weight:500;font-size:clamp(14px,1.2vw,18px);max-width:640px;margin:0 auto 14px;line-height:1.5}
+.chips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.stk{font-family:var(--mono);font-size:12px;font-weight:800;border:2.5px solid var(--bd);border-radius:999px;padding:5px 14px;margin:0;box-shadow:3px 3px 0 var(--sh);transform:none;color:#111;letter-spacing:.04em;text-transform:uppercase}
+.s1{background:var(--pink)}.s2{background:var(--yel)}.s3{background:var(--blu);font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+label{font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.04em}
+button,input,select{font-family:var(--mono);font-size:13px;font-weight:600}
+button{border:2.5px solid var(--bd);border-radius:12px;background:var(--card);color:var(--ink);text-transform:uppercase;font-weight:800;letter-spacing:.03em;box-shadow:3px 3px 0 var(--sh);transition:transform .08s,box-shadow .08s}
+button:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--sh)}
+button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--sh)}
+button.pri{background:var(--yel);color:#111}
+.x{border:none!important;box-shadow:none!important;background:none!important;text-transform:none;color:var(--ink)!important}
+.x:hover,.x:active{transform:none}
+input,select{border:2.5px solid var(--bd);border-radius:12px;background:var(--card);color:var(--ink);padding:8px 12px}
+input[type=checkbox]{accent-color:var(--ink);width:18px;height:18px;padding:0}
+input[type=color]{padding:2px;height:36px;width:48px}
+#count{background:var(--pink);color:#111;border:2.5px solid var(--bd);border-radius:999px;transform:none;font-weight:800;padding:4px 14px}
+.tabs{gap:10px;margin-bottom:18px}
+.tabs button{background:var(--card);color:var(--ink);clip-path:none;border:2.5px solid var(--bd);border-radius:999px;padding:10px 22px;margin:0}
+.tabs button.on{background:var(--blkbg);color:var(--blktx);box-shadow:3px 3px 0 var(--pink)}
+.drop{background:var(--yel);border:3px solid var(--bd);border-radius:22px;box-shadow:6px 6px 0 var(--sh);transform:none}
+.drop b{font-family:var(--pix);font-weight:400;font-size:clamp(24px,2.4vw,34px);text-transform:uppercase}
+.drop small{font-family:var(--hand);font-size:13px;font-weight:500;color:#333}
+.drop::before,.item::before{display:none}
+.drop button.pri{background:var(--card)}
+.grid{gap:22px 20px}
+.item,.item:nth-child(odd),.item:nth-child(even){transform:none;border:3px solid var(--bd);border-radius:16px;box-shadow:5px 5px 0 var(--sh);padding:8px 8px 0;background:var(--card)}
+.item:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--sh)}
+.item img{border-radius:10px;border:2px solid var(--bd)}
+.meta{padding:8px 4px 8px}
+.meta .row{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink)}
+.meta input{border:none;border-bottom:2px solid var(--bd);border-radius:0;background:transparent;color:var(--ink);font-family:var(--hand);font-size:14px;font-weight:600;padding:3px 0}
+.tag{border:2px solid var(--bd);border-radius:999px;font-family:var(--mono);font-size:10px;font-weight:800;padding:1px 8px}
+.t1{background:var(--pink)}.t2{background:var(--blu)}
+.gh{background:var(--blkbg);color:var(--blktx);border-radius:8px;transform:none;box-shadow:none;font-family:var(--pix);font-weight:400;font-size:16px;letter-spacing:.04em;padding:5px 14px}
+.gh span{color:inherit;opacity:.65}
+.moved{outline:4px solid var(--pink)}
+.th{border:2.5px solid var(--bd);border-radius:10px;box-shadow:3px 3px 0 var(--sh);padding:3px 3px 0}
+.th img{border-radius:6px}
+.fm{background:var(--yel);border:2.5px solid var(--bd);border-radius:999px;transform:none;box-shadow:3px 3px 0 var(--sh);font-weight:800;font-family:var(--mono)}
+.fm:nth-of-type(3n+2){background:var(--pink)}.fm:nth-of-type(3n){background:var(--blu)}
+.fm select{border:2px solid var(--bd);border-radius:8px;padding:2px 6px;font-size:11px}
+.hint{font-family:var(--mono);font-weight:700;color:var(--mut)}
+.empty{font-family:var(--pix);font-size:26px;text-transform:uppercase;color:var(--ink)}
+canvas.page{border:none;outline:3px solid var(--bd);box-shadow:6px 6px 0 var(--sh);border-radius:2px}
+#toast{background:#111;border:2px solid var(--bd);border-radius:12px;font-family:var(--mono);box-shadow:4px 4px 0 var(--pink)}
+#toast button{background:var(--yel);border:2px solid #fff;box-shadow:none;color:#111}
+#gate{background:var(--bg);background-image:none}
+.gbox{background:var(--card);background-image:none;border:3px solid var(--bd);border-radius:28px;box-shadow:8px 8px 0 var(--sh)}
+.ttlbox{border:3px solid var(--bd);border-radius:18px;background:var(--yel);box-shadow:6px 6px 0 var(--sh);transform:none;padding:6px 26px 10px}
+.ttlbox h1{font-family:var(--pix);font-weight:400;font-size:clamp(40px,9vw,72px);letter-spacing:.01em}
+.pbtn,.pcard:nth-child(even) .pbtn{font-family:var(--pix);font-size:20px;font-weight:400;letter-spacing:.03em;transform:none;background:var(--pink);color:#111}
+.pcard:nth-child(even) .pbtn{background:var(--blu)}.pcard:nth-child(3n) .pbtn{background:var(--yel)}
+.item{color:var(--ink)}
+.tag,.fm,.ttlbox,.drop,.pbtn{color:#111}
+.drop button.pri{background:var(--card);color:var(--ink)}
+.th{background:var(--card)}
+/* upload panel alignment */
+button.pri{box-shadow:3px 3px 0 var(--sh)}
+.drop p{display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 12px!important;font-weight:700;font-size:14px}
+.drop button.pri{display:block;margin:0 auto}
+#vUp .drop .bar{display:grid;grid-template-columns:1fr;gap:10px;justify-content:stretch;align-items:stretch;margin:16px 0 10px!important;text-align:left}
+#vUp .drop .bar label{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;gap:8px;width:100%;justify-content:stretch}
+#vUp .drop .bar input,#vUp .drop .bar select{width:100%;min-width:0}
+@media(min-width:640px) and (max-width:959px){#vUp .drop .bar{grid-template-columns:repeat(3,minmax(0,1fr))}#vUp .drop .bar label{grid-template-columns:1fr;gap:4px}}
 @page{size:A4 landscape;margin:0}
 @media print{
- body{background:#fff!important}.noprint{display:none!important}.wrap{padding:0;max-width:none;margin:0;min-height:0!important;background:none!important;box-shadow:none!important}
+ body{background:#fff!important}.noprint{display:none!important}.wrap{padding:0;max-width:none;margin:0;border:none!important;border-radius:0!important;min-height:0!important;background:none!important;box-shadow:none!important}
  #vCo:not(.hide){display:block!important}.pv{display:block!important;width:100%!important}
- canvas.page{width:100%!important;max-width:none!important;max-height:none!important;height:auto!important;margin:0!important;border:none;margin:0;box-shadow:none;break-after:page}
+ canvas.page{outline:none!important;width:100%!important;max-width:none!important;max-height:none!important;height:auto!important;margin:0!important;border:none;margin:0;box-shadow:none;break-after:page}
  canvas.page:last-child{break-after:auto}
 }
 </style>
+<script>try{var t=localStorage.getItem("mc_theme");if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
 <style id="pagecss">@page{size:A4 landscape;margin:0}</style>
 </head>
 <body class="locked">
 <div class="wrap">
 <header class="hero noprint">
- <div class="hw" id="hello">my internship log</div>
- <div><span class="stk s1">Made things</span><span class="stk s2">Sweat the details</span></div>
- <div class="ttlbox"><h1>WORK<br>COMPILER</h1></div>
- <div><span class="stk s3">Graphic Design Intern</span></div>
- <div class="tagline">Upload posters &amp; video stills as you finish them. At month end, compile and print.</div>
- <div class="hint"><span class="dot"></span>Open to monthly meetings &amp; good deadlines</div>
- <div style="margin-top:12px"><button id="logout">Switch profile</button></div>
+ <div class="navp"><span class="logo">WORK COMPILER</span><span class="hw" id="hello">my internship log</span><button data-themebtn title="Switch light/dark mode">☾ Dark</button><button id="logout">Switch profile</button></div>
+ <h1 class="big">One month =<br><span class="blk">one page</span></h1>
+ <p class="tagline">Upload posters &amp; video stills as you finish them. At month end, compile, arrange and print.</p>
+ <div class="chips"><span class="stk s1">Made things</span><span class="stk s2">Sweat the details</span><span class="stk s3">Graphic Design Intern</span></div>
 </header>
 
 <div class="bar noprint">
@@ -175,7 +249,7 @@ body{font-size:clamp(14px,.35vw + 12px,17px)}
   <div class="bar" style="justify-content:center;margin:12px 0 0">
    <label>Date <input type="date" id="date"></label>
    <label>Type <select id="type"><option>Poster</option><option>Video still</option></select></label>
-   <label>Project <input id="proj" list="projs" placeholder="optional, e.g. Foundation Week"></label>
+   <label>Project <input id="proj" list="projs" placeholder="e.g. Foundation Week"></label>
   </div>
   <small>Posters with the same project name are grouped together. Date, type and project apply to the files you add next. Edit any item afterwards.</small>
  </div>
@@ -216,6 +290,7 @@ body{font-size:clamp(14px,.35vw + 12px,17px)}
 
 <div id="gate" class="noprint">
  <div class="gbox">
+  <div style="text-align:right"><button data-themebtn title="Switch light/dark mode">☾ Dark</button></div>
   <div class="hw">my internship log</div>
   <div class="ttlbox"><h1>WORK<br>COMPILER</h1></div>
   <div class="tagline" id="gtitle"></div>
@@ -674,6 +749,10 @@ $('create').onclick=async()=>{
  profiles.push(p);saveProfiles();$('nm').value='';$('np').value='';openProfile(p);
 };
 $('logout').onclick=()=>{try{db&&db.close()}catch(e){}db=null;items=[];bmc.clear();Object.values(urls).forEach(u=>URL.revokeObjectURL(u));urls={};cur=null;LS.set('mc_last','');$('comp').innerHTML='';showGate()};
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);document.querySelectorAll('[data-themebtn]').forEach(b=>{b.textContent=t==='dark'?'☀ Light':'☾ Dark'})}
+applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light');
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-themebtn]');if(!b)return;
+ const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';LS.set('mc_theme',t);applyTheme(t)});
 (async()=>{const p=profiles.find(x=>x.id===LS.get('mc_last'));if(p&&!p.pin)openProfile(p);else showGate()})();
 </script>
 </body>
