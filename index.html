@@ -474,14 +474,22 @@ $('gUp').addEventListener('drop',async e=>{const c=e.target.closest&&e.target.cl
 $('gUp').addEventListener('dragend',()=>{dragId=null});
 $('gUp').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-mv]');if(!b)return;step(b.dataset.id,+b.dataset.mv)});
 function note(t){const el=$('toast');clearTimeout(undoT);undo=null;el.textContent=t;el.style.display='block';undoT=setTimeout(()=>{el.style.display='none'},4500)}
+async function moveBlock(id,dir,mo){
+ const l=inMonth(mo),blocks=[];
+ for(const it of l){const k=pk(it),last=blocks[blocks.length-1];if(k&&last&&pk(last[0])===k)last.push(it);else blocks.push([it])}
+ const bi=blocks.findIndex(b=>b.some(x=>x.id===id)),bj=bi+dir;
+ if(bi<0||bj<0||bj>=blocks.length)return;
+ [blocks[bi],blocks[bj]]=[blocks[bj],blocks[bi]];
+ const flat=blocks.flat();for(let i=0;i<flat.length;i++){flat[i].ord=i;await put(flat[i])}
+ render()}
 function step(id,dir,mo){const l=inMonth(mo),i=l.findIndex(x=>x.id===id),j=i+dir;if(i<0||j<0||j>=l.length)return;
- if(kg()&&pk(l[i])&&pk(l[j])!==pk(l[i])){note('Posters stay inside their project. Untick "Keep projects together" to mix them, or drop a poster onto another project\'s poster to move it there.');return}
+ if(kg()&&pk(l[j])!==pk(l[i])){const nm=(l[i].caption||'').trim();moveBlock(id,dir,mo);if(nm)note('Moved the whole project "'+nm+'" '+(dir<0?'earlier':'later'));return}
  reorder(id,j,mo)}
 function arrBar(mos){
  let h='';
  for(const mo of mos){const l=inMonth(mo);if(!l.length)continue;
   h+='<div class="arrrow">'+(mos.length>1?`<span class="hint" style="margin:0 6px 0 0">${esc(mo)}</span>`:'')+l.map(it=>`<div class="th" draggable="true" data-id="${it.id}" data-mo="${mo}" title="${esc(it.caption||'')}"><img src="${url(it)}" alt="" draggable="false"><div class="tb"><button class="x" data-mv="-1" data-id="${it.id}" data-mo="${mo}">◀</button><button class="x" data-mv="1" data-id="${it.id}" data-mo="${mo}">▶</button></div></div>`).join('')+'</div>'}
- $('arr').innerHTML=h?'<span class="hint" style="margin:0;display:block">Arrange the order: drag a poster onto another, or use ◀ ▶</span>'+h:''}
+ $('arr').innerHTML=h?'<span class="hint" style="margin:0;display:block">Arrange: ◀ ▶ moves a poster, and at the edge of a project it moves the whole project. Drag a poster onto another project to move it into that project.</span>'+h:''}
 $('arr').addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('.th');if(!c)return;dragId=c.dataset.id;try{e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move'}catch(x){}});
 $('arr').addEventListener('dragover',e=>{if(dragId)e.preventDefault()});
 $('arr').addEventListener('dragend',()=>{dragId=null});
