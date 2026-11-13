@@ -93,6 +93,10 @@ input[type=color]{padding:0;height:30px;width:42px}
 .gh span{color:#1d1b19;opacity:.6}
 .empty{font-family:var(--hand);font-size:24px}
 canvas.page{border:none;box-shadow:0 4px 18px #0004}
+#arr{margin:4px 0 14px}.arrrow{display:flex;gap:8px;overflow-x:auto;padding:8px 2px 10px;align-items:flex-start}.th{flex:0 0 auto;width:72px;background:#fff;padding:4px 4px 0;box-shadow:0 1px 4px #0003;cursor:grab}.th img{width:100%;height:88px;object-fit:cover;display:block}.tb{display:flex;justify-content:space-between}.tb .x{color:#1d1b19;font-size:13px;padding:2px 5px}
+#fmts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 14px}
+.fm{background:#f2c744;color:#1d1b19;padding:4px 10px;border-radius:4px;transform:rotate(-.6deg);display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:11px;text-transform:uppercase}
+.fm select{font-size:11px;padding:2px 4px;background:#fff;color:#1d1b19}
 canvas.page{width:auto;max-width:100%;max-height:80vh;max-height:80dvh;margin-left:auto;margin-right:auto}
 body.locked .wrap{display:none}
 #gate{position:fixed;inset:0;z-index:100;display:flex;overflow:auto;padding:20px;background-color:var(--gridbg);background-image:linear-gradient(var(--gridln) 1px,transparent 1px),linear-gradient(90deg,var(--gridln) 1px,transparent 1px);background-size:28px 28px}
@@ -174,6 +178,8 @@ body.locked .wrap{display:none}
   <button id="print">Print / Save as PDF</button>
   <button id="zip">Download images (ZIP)</button>
  </div>
+ <div id="fmts" class="noprint"></div>
+ <div id="arr" class="noprint"></div>
  <div id="comp"></div>
 </section>
 </div>
@@ -246,6 +252,7 @@ async function add(files){
   if(!f.type.startsWith('image/'))continue;
   const it={id:Date.now()+'-'+Math.random().toString(36).slice(2,7),name:f.name,blob:f,date:$('date').value||today(),
    type:$('type').value,caption:$('proj').value,added:Date.now()};
+  const sib=items.find(x=>x.fmt&&pk(it)&&pk(x)===pk(it)&&x.date.slice(0,7)===it.date.slice(0,7));if(sib)it.fmt=sib.fmt;
   items.push(it);await put(it);
  }
  render();
@@ -268,7 +275,7 @@ $('gUp').onclick=async e=>{const b=e.target.closest&&e.target.closest('[data-del
  undo=it;const t=$('toast');t.innerHTML='Removed. <button id="undo">Undo</button>';t.style.display='block';
  clearTimeout(undoT);undoT=setTimeout(()=>{t.style.display='none';undo=null},8000);
  $('undo').onclick=async()=>{if(!undo)return;items.push(undo);await put(undo);undo=null;t.style.display='none';render()}};
-$('gUp').onchange=async e=>{const id=e.target.dataset.cap;if(!id)return;const it=items.find(i=>i.id===id);it.caption=e.target.value;await put(it);render()};
+$('gUp').onchange=async e=>{const id=e.target.dataset.cap;if(!id)return;const it=items.find(i=>i.id===id);it.caption=e.target.value;delete it.fmt;await put(it);render()};
 function tab(c){$('vUp').classList.toggle('hide',c);$('vCo').classList.toggle('hide',!c);$('tUp').classList.toggle('on',!c);$('tCo').classList.toggle('on',c);render()}
 $('tUp').onclick=()=>tab(false);$('tCo').onclick=()=>tab(true);
 $('print').onclick=()=>{try{window.print()}catch(e){alert('Printing is blocked here. Use the ZIP download instead.')}};
@@ -292,8 +299,6 @@ function rowsFor(rs,h,gid){const o=[];let cur=[],s=0;
   if(s*h>=FW){o.push({idx:cur,full:true,h:FW/s});cur=[];s=0}
  }
  if(cur.length)o.push({idx:cur,full:false,h:h});return o}
-function fitH(rs,gid){if(!rs.length)return FH;let lo=8,hi=FH;const target=FH*fillT;
- for(let k=0;k<40;k++){const mid=(lo+hi)/2;if(rowsFor(rs,mid,gid).reduce((a,r)=>a+r.h,0)>target)hi=mid;else lo=mid}return lo}
 function split(rs,n,keys){
  if(!keys||!rs.length){const out=[],per=Math.max(1,Math.ceil(rs.length/n));for(let i=0;i<rs.length;i+=per)out.push([i,Math.min(i+per,rs.length)]);return out}
  const gs=[];let st=0;
@@ -301,27 +306,79 @@ function split(rs,n,keys){
  const target=rs.length/n,out=[];let a=0,cnt=0;
  for(const [x,y] of gs){const g=y-x;if(cnt>0&&out.length<n-1&&cnt+g>target*1.2){out.push([a,a+cnt]);a+=cnt;cnt=0}cnt+=g}
  out.push([a,a+cnt]);return out}
-function autoPages(rs,keys,gid){for(let n=1;n<8;n++){if(split(rs,n,keys).every(([a,b])=>fitH(rs.slice(a,b),gid&&gid.slice(a,b))>=MINH))return n}return 8}
-function paint(c,ox,bm,rs,title,font,col,gid,kz,nm,showLbl){
+// project layouts: flow | row | grid | hero
+function mkSegs(kz,fm){
+ const segs=[],n=kz.length;let i=0;
+ while(i<n){let j=i+1;
+  if(kz[i]){while(j<n&&kz[j]===kz[i])j++}else{while(j<n&&!kz[j])j++}
+  const idx=[];for(let q=i;q<j;q++)idx.push(q);
+  const t=kz[i]?(idx.map(q=>fm[q]).find(v=>v&&v!=='flow')||'flow'):'flow';
+  const last=segs[segs.length-1];
+  if(t==='flow'&&last&&last.t==='flow')last.idx.push(...idx);else segs.push({t,idx});
+  i=j}
+ return segs}
+function fixedGeo(sg,rs){
+ const idx=sg.idx,n=idx.length,cap=FH*0.5;let t=sg.t;if(t==='hero'&&n<2)t='row';
+ if(t==='row'){const S=idx.reduce((a,i)=>a+rs[i],0);let h=FW/S;if(h>cap)h=cap;let x=0;
+  const cells=idx.map(i=>{const c={i,x,y:0,w:rs[i]*h,h};x+=c.w;return c});return{h,w:x,cells}}
+ if(t==='grid'){const cols=Math.min(n,n<=4?2:(n<=9?3:4)),rows=Math.ceil(n/cols);
+  const rc=idx.reduce((a,i)=>a+rs[i],0)/n;let cw=FW/cols,ch=cw/rc;
+  if(ch*rows>cap){const k=cap/(ch*rows);cw*=k;ch*=k}
+  return{h:rows*ch,w:cols*cw,cells:idx.map((i,q)=>({i,x:(q%cols)*cw,y:Math.floor(q/cols)*ch,w:cw,h:ch,crop:true}))}}
+ const rest=idx.slice(1),m=rest.length,rows=m>=2?2:1,cols=Math.ceil(m/rows);
+ const rc=rest.reduce((a,i)=>a+rs[i],0)/m,r0=rs[idx[0]];
+ let hh=FW/(r0+cols*rc/rows);if(hh>cap)hh=cap;
+ const ch=hh/rows,cw=rc*ch,cells=[{i:idx[0],x:0,y:0,w:r0*hh,h:hh}];
+ rest.forEach((i,q)=>cells.push({i,x:r0*hh+(q%cols)*cw,y:Math.floor(q/cols)*ch,w:cw,h:ch,crop:true}));
+ return{h:hh,w:r0*hh+cols*cw,cells}}
+function plan(rs,kz,fm,gid){
+ const segs=mkSegs(kz,fm),target=FH*fillT;let fixed=0,fc=0;
+ for(const sg of segs){if(sg.t==='flow')fc+=sg.idx.length;else{sg.geo=fixedGeo(sg,rs);fixed+=sg.geo.h}}
+ let k=1;const lim=fc?target*0.75:target;if(fixed>lim)k=lim/fixed;
+ let hFlow=0;
+ if(fc){const avail=target-fixed*k;
+  const fl=segs.filter(s=>s.t==='flow').map(s=>({sub:s.idx.map(i=>rs[i]),g:gid?s.idx.map(i=>gid[i]):null}));
+  const tot=h=>fl.reduce((a,f)=>a+rowsFor(f.sub,h,f.g).reduce((b,r)=>b+r.h,0),0);
+  let lo=8,hi=FH;for(let q=0;q<40;q++){const mid=(lo+hi)/2;if(tot(mid)>avail)hi=mid;else lo=mid}hFlow=lo}
+ return{segs,k,hFlow,fc}}
+function autoPages(rs,ks,fm,useG,rb){
+ for(let n=1;n<8;n++){
+  if(split(rs,n,useG?ks:null).every(([a,b])=>{const kk=ks.slice(a,b);
+   const P=plan(rs.slice(a,b),useG?kk:kk.map(()=>''),fm.slice(a,b),(useG&&rb)?kk:null);
+   return P.k>=1&&(!P.fc||P.hFlow>=MINH)}))return n}
+ return 8}
+function put(c,b,x,y,w,h,crop){
+ x=Math.round(x);y=Math.round(y);w=Math.round(x+w)-x;h=Math.round(y+h)-y;
+ if(!crop){c.drawImage(b,x,y,w,h);return}
+ const br=b.width/b.height,cr=w/h;let sx=0,sy=0,sw=b.width,sh=b.height;
+ if(br>cr){sw=b.height*cr;sx=(b.width-sw)/2}else{sh=b.width/cr;sy=(b.height-sh)/2}
+ c.drawImage(b,sx,sy,sw,sh,x,y,w,h)}
+function paint(c,ox,bm,rs,title,font,col,ks,nm,fm,useG,rb,showLbl){
  c.save();c.translate(ox,0);
- let R=[],used=0;
- if(rs.length)R=rowsFor(rs,fitH(rs,gid),gid);
- const labs=[];
+ const gid=(useG&&rb)?ks:null;
+ const P=plan(rs,useG?ks:ks.map(()=>''),fm,gid);
+ const pos=[];let y=FY,lastP=null;
  c.save();c.beginPath();c.rect(FX,FY,FW,FH);c.clip();
- let y=FY;
- for(const r of R){let x=FX;for(const i of r.idx){const w=rs[i]*r.h;
-   const x0=Math.round(x),x1=Math.round(x+w),y0=Math.round(y),y1=Math.round(y+r.h);
-   c.drawImage(bm[i],x0,y0,x1-x0,y1-y0);
-   if(showLbl&&nm[i]&&(i===0||kz[i]!==kz[i-1]))labs.push([nm[i],x0,y0]);x+=w}
-  y+=r.h;used+=r.h}
- for(const [t,lx,ly] of labs){c.font='bold 36px system-ui,sans-serif';const tw=c.measureText(t).width;
+ for(const sg of P.segs){
+  if(sg.t==='flow'){
+   const sub=sg.idx.map(i=>rs[i]),gs=gid?sg.idx.map(i=>gid[i]):null;
+   for(const r of rowsFor(sub,P.hFlow,gs)){let x=FX;
+    for(const q of r.idx){const i=sg.idx[q],w=sub[q]*r.h;put(c,bm[i],x,y,w,r.h,false);pos[i]=[Math.round(x),Math.round(y)];x+=w}
+    lastP=r.full?null:{x,y,h:r.h};y+=r.h}
+  }else{
+   const g=sg.geo,k=P.k,off=(FW-g.w*k)/2;
+   for(const ce of g.cells){const x=FX+off+ce.x*k,yy=y+ce.y*k;put(c,bm[ce.i],x,yy,ce.w*k,ce.h*k,!!ce.crop);pos[ce.i]=[Math.round(x),Math.round(yy)]}
+   y+=g.h*k;lastP=null}
+ }
+ if(showLbl)for(let i=0;i<bm.length;i++){
+  if(!nm[i]||!pos[i]||!(i===0||ks[i]!==ks[i-1]))continue;
+  const t=nm[i],lx=pos[i][0],ly=pos[i][1];
+  c.font='bold 36px system-ui,sans-serif';const tw=c.measureText(t).width;
   c.fillStyle='rgba(0,0,0,.72)';c.beginPath();if(c.roundRect)c.roundRect(lx+16,ly+16,tw+36,58,29);else c.rect(lx+16,ly+16,tw+36,58);c.fill();
   c.fillStyle='#fff';c.textAlign='left';c.textBaseline='middle';c.fillText(t,lx+34,ly+46)}
  c.restore();
- let reg={x:FX,y:FY+used,w:FW,h:FH-used};
- const last=R[R.length-1];
- if(last&&!last.full){const lx=FX+last.idx.reduce((a,i)=>a+rs[i]*last.h,0),ly=FY+used-last.h;
-  const b={x:lx,y:ly,w:FX+FW-lx,h:FY+FH-ly};if(b.w*b.h>reg.w*reg.h)reg=b}
+ let reg={x:FX,y:y,w:FW,h:FY+FH-y};
+ if(lastP){const b={x:lastP.x,y:lastP.y,w:FX+FW-lastP.x,h:FY+FH-lastP.y};if(b.w*b.h>reg.w*reg.h)reg=b}
  if(title){
   c.font='100px "'+font+'"';const mw=c.measureText(title).width||1;
   const size=Math.min(.9*reg.w/mw*100,1.1*reg.h,450);
@@ -331,6 +388,16 @@ function paint(c,ox,bm,rs,title,font,col,gid,kz,nm,showLbl){
  if($('sb').checked){c.strokeStyle='#000';c.lineWidth=4;c.strokeRect(FX,FY,FW,FH)}
  c.restore();
 }
+const FMT_NAMES={flow:'Flow',row:'One row',grid:'Grid',hero:'Big first + grid'};
+function fmtBar(mos){
+ const box=$('fmts');
+ if(!kg()){box.innerHTML='<span class="sub" style="margin:0">Turn on "Keep projects together" to choose a layout for each project.</span>';return}
+ let h='';
+ for(const mo of mos){const l=inMonth(mo),seen={};
+  for(const it of l){const k=pk(it);if(!k||seen[k])continue;seen[k]=1;
+   const g=l.filter(x=>pk(x)===k),cur=g.map(x=>x.fmt).find(v=>v&&v!=='flow')||'flow';
+   h+=`<label class="fm">${esc(g[0].caption.trim())} (${g.length})${mos.length>1?' · '+esc(mo):''} <select data-mo="${mo}" data-k="${esc(k)}">${Object.keys(FMT_NAMES).map(v=>`<option value="${v}"${v===cur?' selected':''}>${FMT_NAMES[v]}</option>`).join('')}</select></label>`}}
+ box.innerHTML=h?'<span class="hint" style="margin:0">Project layouts</span>'+h:'<span class="sub" style="margin:0">Give your posters a project name to choose a layout for each project.</span>'}
 async function drawPage(){
  const tok=++drawTok;
  const m1=$('month').value,m2=$('month2').value,range=!!(m2&&m1&&m2>m1);
@@ -340,26 +407,27 @@ async function drawPage(){
   else mos.push(m1)}
  $('ttl').disabled=range;
  if(!titleEdited||range)$('ttl').value=monthName(m1);
+ fmtBar(mos);arrBar(mos);
  const font=$('fnt').value,col=$('col').value,showT=$('st').checked;
  fillT=showT?0.74:0.96;
  try{await document.fonts.load('100px "'+font+'"')}catch(e){}
  const pages=[];
  for(const mo of mos){
-  const bm=[],ks=[],nms=[];
-  for(const it of inMonth(mo)){try{bm.push(await createImageBitmap(it.blob));ks.push(pk(it));nms.push((it.caption||'').trim())}catch(e){}}
+  const bm=[],ks=[],nms=[],fms=[];
+  for(const it of inMonth(mo)){try{bm.push(await createImageBitmap(it.blob));ks.push(pk(it));nms.push((it.caption||'').trim());fms.push(it.fmt||'flow')}catch(e){}}
   const rs=bm.map(b=>b.width/b.height);
-  const keys=kg()?ks:null,gid=(keys&&$('rb').checked)?keys:null;
-  const n=+$('pg').value||autoPages(rs,keys,gid);
-  const chunks=bm.length?split(rs,n,keys):[[0,0]];
+  const useG=kg(),rb=$('rb').checked;
+  const n=+$('pg').value||autoPages(rs,ks,fms,useG,rb);
+  const chunks=bm.length?split(rs,n,useG?ks:null):[[0,0]];
   const base=range?monthName(mo):$('ttl').value.trim();
-  chunks.forEach(([a,b],pi)=>pages.push({bm:bm.slice(a,b),rs:rs.slice(a,b),title:showT&&base?(pi?base+' '+(pi+1):base):'',gid:gid&&gid.slice(a,b),kz:ks.slice(a,b),nm:nms.slice(a,b)}));
+  chunks.forEach(([a,b],pi)=>pages.push({bm:bm.slice(a,b),rs:rs.slice(a,b),title:showT&&base?(pi?base+' '+(pi+1):base):'',ks:ks.slice(a,b),nm:nms.slice(a,b),fm:fms.slice(a,b),useG,rb}));
  }
  if(tok!==drawTok)return;
  const two=$('lay').value==='2';
  $('pagecss').textContent=two?'@page{size:A4 landscape;margin:0}':'@page{size:A5 portrait;margin:0}';
  const sheets=[];
  if(two)for(let i=0;i<pages.length;i+=2)sheets.push([pages[i],pages[i+1]]);else pages.forEach(p=>sheets.push([p]));
- if(!sheets.length)sheets.push([{bm:[],rs:[],title:showT?$('ttl').value.trim():'',gid:null,kz:[],nm:[]}]);
+ if(!sheets.length)sheets.push([{bm:[],rs:[],title:showT?$('ttl').value.trim():'',ks:[],nm:[],fm:[],useG:false,rb:false}]);
  const box=$('comp');
  while(box.children.length>sheets.length)box.lastChild.remove();
  sheets.forEach((sh,si)=>{
@@ -367,10 +435,14 @@ async function drawPage(){
   cv.className='page '+(two?'two':'one');
   cv.width=two?2*W:W;cv.height=H;
   const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,cv.width,H);
-  sh.forEach((p,k)=>{if(p)paint(c,k*W,p.bm,p.rs,p.title,font,col,p.gid,p.kz,p.nm,$('lb').checked)});
+  sh.forEach((p,k)=>{if(p)paint(c,k*W,p.bm,p.rs,p.title,font,col,p.ks,p.nm,p.fm,p.useG,p.rb,$('lb').checked)});
  });
  $('pgnote').textContent=pages.length+' page'+(pages.length===1?'':'s')+(two?' · '+sheets.length+' A4 sheet'+(sheets.length===1?'':'s'):'');
 }
+$('fmts').onchange=async e=>{const sel=e.target.closest&&e.target.closest('select[data-k]');if(!sel)return;
+ const mo=sel.dataset.mo,k=sel.dataset.k;
+ for(const it of items){if(it.date.startsWith(mo)&&pk(it)===k){it.fmt=sel.value;await put(it)}}
+ drawPage()};
 $('ttl').oninput=()=>{titleEdited=true;drawPage()};
 $('fnt').onchange=drawPage;$('col').oninput=drawPage;
 $('month').onchange=()=>{titleEdited=false;render()};
@@ -389,7 +461,7 @@ $('png').onclick=async()=>{
 };
 // reordering
 let dragId=null;
-async function reorder(id,to){const m=inMonth();const from=m.findIndex(i=>i.id===id);
+async function reorder(id,to,mo){const m=inMonth(mo);const from=m.findIndex(i=>i.id===id);
  if(from<0||to<0||to>=m.length||from===to)return;
  const [it]=m.splice(from,1);m.splice(to,0,it);
  for(let i=0;i<m.length;i++){m[i].ord=i;await put(m[i])}render()}
@@ -397,11 +469,28 @@ $('gUp').addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.clo
 $('gUp').addEventListener('dragover',e=>{if(dragId)e.preventDefault()});
 $('gUp').addEventListener('drop',async e=>{const c=e.target.closest&&e.target.closest('.item');if(!c||!dragId)return;e.preventDefault();
  const id=dragId;dragId=null;const it=items.find(i=>i.id===id),tg=items.find(i=>i.id===c.dataset.id);if(!it||!tg||it===tg)return;
- if(kg()&&pk(it)!==pk(tg)){it.caption=tg.caption;await put(it)}
+ if(kg()&&pk(it)!==pk(tg)){it.caption=tg.caption;delete it.fmt;await put(it)}
  reorder(id,inMonth().findIndex(i=>i.id===tg.id))});
 $('gUp').addEventListener('dragend',()=>{dragId=null});
-$('gUp').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-mv]');if(!b)return;
- const id=b.dataset.id,i=inMonth().findIndex(x=>x.id===id);reorder(id,i+ +b.dataset.mv)});
+$('gUp').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-mv]');if(!b)return;step(b.dataset.id,+b.dataset.mv)});
+function note(t){const el=$('toast');clearTimeout(undoT);undo=null;el.textContent=t;el.style.display='block';undoT=setTimeout(()=>{el.style.display='none'},4500)}
+function step(id,dir,mo){const l=inMonth(mo),i=l.findIndex(x=>x.id===id),j=i+dir;if(i<0||j<0||j>=l.length)return;
+ if(kg()&&pk(l[i])&&pk(l[j])!==pk(l[i])){note('Posters stay inside their project. Untick "Keep projects together" to mix them, or drop a poster onto another project\'s poster to move it there.');return}
+ reorder(id,j,mo)}
+function arrBar(mos){
+ let h='';
+ for(const mo of mos){const l=inMonth(mo);if(!l.length)continue;
+  h+='<div class="arrrow">'+(mos.length>1?`<span class="hint" style="margin:0 6px 0 0">${esc(mo)}</span>`:'')+l.map(it=>`<div class="th" draggable="true" data-id="${it.id}" data-mo="${mo}" title="${esc(it.caption||'')}"><img src="${url(it)}" alt="" draggable="false"><div class="tb"><button class="x" data-mv="-1" data-id="${it.id}" data-mo="${mo}">◀</button><button class="x" data-mv="1" data-id="${it.id}" data-mo="${mo}">▶</button></div></div>`).join('')+'</div>'}
+ $('arr').innerHTML=h?'<span class="hint" style="margin:0;display:block">Arrange the order: drag a poster onto another, or use ◀ ▶</span>'+h:''}
+$('arr').addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('.th');if(!c)return;dragId=c.dataset.id;try{e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move'}catch(x){}});
+$('arr').addEventListener('dragover',e=>{if(dragId)e.preventDefault()});
+$('arr').addEventListener('dragend',()=>{dragId=null});
+$('arr').addEventListener('drop',async e=>{const c=e.target.closest&&e.target.closest('.th');if(!c||!dragId)return;e.preventDefault();
+ const id=dragId;dragId=null;const mo=c.dataset.mo,it=items.find(i=>i.id===id),tg=items.find(i=>i.id===c.dataset.id);
+ if(!it||!tg||it===tg||!it.date.startsWith(mo))return;
+ if(kg()&&pk(it)!==pk(tg)){it.caption=tg.caption;delete it.fmt;await put(it);note(tg.caption.trim()?'Moved into project "'+tg.caption.trim()+'"':'Removed from its project')}
+ reorder(id,inMonth(mo).findIndex(i=>i.id===tg.id),mo)});
+$('arr').addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-mv]');if(!b)return;step(b.dataset.id,+b.dataset.mv,b.dataset.mo)});
 $('rst').onclick=async()=>{for(const it of inMonth()){delete it.ord;await put(it)}render()};
 // ---- profiles (local sign-in) ----
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
