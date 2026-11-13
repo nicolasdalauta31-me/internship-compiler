@@ -273,6 +273,7 @@ button.pri{box-shadow:3px 3px 0 var(--sh)}
   <span id="pgnote" class="sub" style="margin:0"></span>
   <label><input type="checkbox" id="rb" checked> Each project on its own row</label>
   <label><input type="checkbox" id="lb"> Project labels</label>
+  <label>Label style <select id="lbs"><option value="tag-b">Tag · bottom</option><option value="tag-t">Tag · top</option><option value="strip-b">Strip · bottom</option><option value="strip-t">Strip · top</option></select></label>
  </div>
  <div class="bar noprint">
   <button class="pri" id="png">Download page(s) (PNG)</button>
@@ -471,6 +472,19 @@ function layoutPage(rs,ks,fm,useG,rb){
    y+=g.h*k;lastP=null}
  }
  return{rects,y,lastP}}
+function drawLabel(c,t,r,st){
+ const bottom=/-b$/.test(st),strip=/^strip/.test(st),pad=strip?0:16,hgt=strip?64:54,maxW=r.w-2*pad-(strip?40:36);
+ if(!t||maxW<60)return;
+ c.save();c.beginPath();c.rect(r.x,r.y,r.w,r.h);c.clip();
+ let fs=36;c.font='bold '+fs+'px system-ui,sans-serif';
+ while(fs>20&&c.measureText(t).width>maxW){fs-=2;c.font='bold '+fs+'px system-ui,sans-serif'}
+ let tx=t;if(c.measureText(tx).width>maxW){while(tx.length>1&&c.measureText(tx+'…').width>maxW)tx=tx.slice(0,-1);tx+='…'}
+ const tw=c.measureText(tx).width,bx=strip?r.x:r.x+pad,bw=strip?r.w:tw+36,by=bottom?r.y+r.h-hgt-(strip?0:pad):r.y+(strip?0:pad);
+ c.fillStyle='rgba(0,0,0,.78)';c.beginPath();
+ if(!strip&&c.roundRect)c.roundRect(bx,by,bw,hgt,hgt/2);else c.rect(bx,by,bw,hgt);
+ c.fill();c.fillStyle='#fff';c.textBaseline='middle';
+ if(strip){c.textAlign='center';c.fillText(tx,bx+bw/2,by+hgt/2+1)}else{c.textAlign='left';c.fillText(tx,bx+18,by+hgt/2+1)}
+ c.restore()}
 function pill(c,t,lx,ly){c.font='bold 36px system-ui,sans-serif';const tw=c.measureText(t).width;
  c.fillStyle='rgba(0,0,0,.72)';c.beginPath();if(c.roundRect)c.roundRect(lx+16,ly+16,tw+36,58,29);else c.rect(lx+16,ly+16,tw+36,58);c.fill();
  c.fillStyle='#fff';c.textAlign='left';c.textBaseline='middle';c.fillText(t,lx+34,ly+46)}
@@ -479,7 +493,7 @@ function paint(c,ox,bm,rs,title,font,col,ks,nm,fm,useG,rb,showLbl){
  const L=layoutPage(rs,ks,fm,useG,rb);
  c.save();c.beginPath();c.rect(FX,FY,FW,FH);c.clip();
  L.rects.forEach((r,i)=>{if(r)putImg(c,bm[i],r.x,r.y,r.w,r.h,r.crop)});
- if(showLbl)for(let i=0;i<bm.length;i++){const r=L.rects[i];if(!nm[i]||!r||!(i===0||ks[i]!==ks[i-1]))continue;pill(c,nm[i],Math.round(r.x),Math.round(r.y))}
+ if(showLbl)for(let i=0;i<bm.length;i++){const r=L.rects[i];if(!nm[i]||!r||!(i===0||ks[i]!==ks[i-1]))continue;drawLabel(c,nm[i],{x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.w),h:Math.round(r.h)},$('lbs').value)}
  c.restore();
  const y=L.y;let reg={x:FX,y:y,w:FW,h:FY+FH-y};
  if(L.lastP){const b={x:L.lastP.x,y:L.lastP.y,w:FX+FW-L.lastP.x,h:FY+FH-L.lastP.y};if(b.w*b.h>reg.w*reg.h)reg=b}
@@ -525,7 +539,7 @@ function paintFree(c,ox,pg,font,col,showT,showLbl){
  c.save();c.translate(ox,0);c.beginPath();c.rect(0,0,W,H);c.clip();
  const its=pg.items.slice().sort((a,b)=>(a.fz||0)-(b.fz||0));
  for(const it of its){const b=bmc.get(it.id);if(b)putImg(c,b,it.fx,it.fy,it.fw,it.fh,true)}
- if(showLbl){const seen={};for(const it of its){const k=pk(it);if(!k||seen[k])continue;seen[k]=1;pill(c,it.caption.trim(),Math.round(it.fx),Math.round(it.fy))}}
+ if(showLbl){const seen={};for(const it of its){const k=pk(it);if(!k||seen[k])continue;seen[k]=1;drawLabel(c,it.caption.trim(),{x:Math.round(it.fx),y:Math.round(it.fy),w:Math.round(it.fw),h:Math.round(it.fh)},$('lbs').value)}}
  const s=its.find(i=>i.id===sel);
  if(s){c.save();c.strokeStyle='#e8643c';c.lineWidth=6;c.setLineDash([22,12]);c.strokeRect(s.fx,s.fy,s.fw,s.fh);c.setLineDash([]);c.fillStyle='#e8643c';c.fillRect(s.fx+s.fw-HS,s.fy+s.fh-HS,HS,HS);c.restore()}
  pg.tbox=null;
@@ -653,7 +667,7 @@ $('ttl').oninput=()=>{titleEdited=true;drawPage()};
 $('fnt').onchange=drawPage;$('col').oninput=drawPage;
 $('month').onchange=()=>{titleEdited=false;render()};
 $('kg').onchange=render;
-$('pg').onchange=drawPage;$('lay').onchange=drawPage;$('month2').onchange=render;$('st').onchange=drawPage;$('sb').onchange=drawPage;$('rb').onchange=drawPage;$('lb').onchange=drawPage;
+$('pg').onchange=drawPage;$('lay').onchange=drawPage;$('month2').onchange=render;$('st').onchange=drawPage;$('sb').onchange=drawPage;$('rb').onchange=drawPage;$('lb').onchange=drawPage;$('lbs').onchange=drawPage;
 $('png').onclick=async()=>{
  clearSel();const cvs=[...$('comp').querySelectorAll('canvas')];if(!cvs.length)return;
  const blobs=await Promise.all(cvs.map(cv=>new Promise(r=>cv.toBlob(r,'image/png'))));
