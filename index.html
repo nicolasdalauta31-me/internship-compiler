@@ -125,6 +125,11 @@ body{font-size:clamp(14px,.35vw + 12px,17px)}
 @media(min-width:960px){
  #vCo:not(.hide){display:grid;grid-template-columns:minmax(300px,25vw) minmax(0,1fr);gap:22px;align-items:start}
  #vCo .ctl{position:sticky;top:12px;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:2px 8px 2px 2px}
+ #vUp:not(.hide){display:grid;grid-template-columns:minmax(280px,25vw) minmax(0,1fr);gap:22px;align-items:start}
+ #vUp .ctl{position:sticky;top:12px}
+ #vUp .drop .bar{flex-direction:column;align-items:stretch}
+ #vUp .drop label{display:flex;gap:8px;justify-content:space-between;align-items:center}
+ .pv{min-width:0}
  #vCo .pv canvas.page{max-height:calc(100vh - 40px);max-height:calc(100dvh - 40px)}
 }
 @page{size:A4 landscape;margin:0}
@@ -162,6 +167,7 @@ body{font-size:clamp(14px,.35vw + 12px,17px)}
 </div>
 
 <section id="vUp">
+<div class="ctl">
  <div class="drop noprint" id="drop">
   <p style="margin:0 0 8px"><b>Drop images here</b> or</p>
   <input type="file" id="file" accept="image/*" multiple class="hide">
@@ -174,7 +180,8 @@ body{font-size:clamp(14px,.35vw + 12px,17px)}
   <small>Posters with the same project name are grouped together. Date, type and project apply to the files you add next. Edit any item afterwards.</small>
  </div>
  <div class="bar noprint"><span class="sub" style="margin:0">Drag cards (or use ◀ ▶) to set the order on the page.</span><button id="rst">Reset to date order</button></div>
- <div id="gUp" class="grid"></div>
+ </div>
+ <div class="pv"><div id="gUp" class="grid"></div></div>
 </section>
 
 <section id="vCo" class="hide">
